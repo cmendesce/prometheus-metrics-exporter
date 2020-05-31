@@ -26,12 +26,8 @@ def export():
         start = int(data['start'])
         end = int(data['end'])
         
-        ok = generate_reports(metrics, start, end)
-        if ok:
-            return 'reports created', 201
-        else:
-            return 'reports not generated. try again', 500
-
+        path = generate_reports(metrics, start, end)
+        return f'reports generated at {path}', 201
 
 def generate_reports(metrics,  start_time, end_time):
     """
@@ -52,6 +48,7 @@ def generate_reports(metrics,  start_time, end_time):
             except ClientError as e:
                 logger.error('File could not be saved in s3')
 
+    return f's3://{bucket_name}/{start_time}'
 
 def query_range(metric, start, end, step=1):
     """
@@ -60,7 +57,6 @@ def query_range(metric, start, end, step=1):
     url = f'{prometheus_host}/api/v1/query_range'
     params = {'query': metric['query'], 'start': start, 'end': end, 'step': step}
     response = requests.get(url, params)
-    print(response.text)
 
     if not response.ok:
         return list()
