@@ -18,18 +18,18 @@ metrics_file = os.getenv('METRICS_FILE', './metrics.conf')
 bucket_name = os.getenv('BUCKET_NAME')
 prometheus_host = os.getenv('PROMETHEUS_HOST', 'http://localhost:9090')
 
-@app.route('/exports', methods=['POST'])
-def export():
+@app.route('/exports/<name>', methods=['POST'])
+def export(name):
     with open(metrics_file, 'r') as file:
         metrics = hcl.load(file)['metric']
         data = request.json
         start = int(data['start'])
         end = int(data['end'])
         
-        path = generate_reports(metrics, start, end)
+        path = generate_reports(metrics, name, start, end)
         return f'reports generated at {path}', 201
 
-def generate_reports(metrics,  start_time, end_time):
+def generate_reports(metrics, name, start_time, end_time):
     """
     """
     for metric in metrics:
@@ -43,7 +43,7 @@ def generate_reports(metrics,  start_time, end_time):
             df.to_csv(csv_buffer, index=False)
             try:
                 s3.Object(bucket_name,
-                          f'{start_time}/{metric["name"]}.csv').put(Body=csv_buffer.getvalue())
+                          f'{name}-{start_time}/{metric["name"]}.csv').put(Body=csv_buffer.getvalue())
                 logger.info('File saved in s3')
             except ClientError as e:
                 logger.error('File could not be saved in s3')
