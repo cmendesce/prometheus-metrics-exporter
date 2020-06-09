@@ -15,7 +15,6 @@ logger = logging.getLogger()
 s3 = boto3.resource('s3')
 
 metrics_file = os.getenv('METRICS_FILE', './metrics.conf')
-bucket_name = os.getenv('BUCKET_NAME')
 prometheus_host = os.getenv('PROMETHEUS_HOST', 'http://localhost:9090')
 
 @app.route('/exports/<name>', methods=['POST'])
@@ -25,11 +24,12 @@ def export(name):
         data = request.json
         start = int(data['start'])
         end = int(data['end'])
+        bucket_name = data['bucket_name']
         
-        path = generate_reports(metrics, name, start, end)
+        path = generate_reports(metrics, bucket_name, name, start, end)
         return f'reports generated at {path}', 201
 
-def generate_reports(metrics, name, start_time, end_time):
+def generate_reports(metrics, bucket_name, name, start_time, end_time):
     """
     """
     for metric in metrics:
